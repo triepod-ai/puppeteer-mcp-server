@@ -97,6 +97,34 @@ When using remote debugging:
 - Close debugging port when not in use
 - Never expose debugging port to public networks
 
+## Logging and Debugging
+
+### File-based Logging
+The server implements comprehensive logging using Winston:
+
+- Location: `logs/` directory
+- File Pattern: `mcp-puppeteer-YYYY-MM-DD.log`
+- Log Rotation:
+  - Daily rotation
+  - Maximum size: 20MB per file
+  - Retention: 14 days
+  - Automatic compression of old logs
+
+### Log Levels
+- DEBUG: Detailed debugging information
+- INFO: General operational information
+- WARN: Warning messages
+- ERROR: Error events and exceptions
+
+### Logged Information
+- Server startup/shutdown events
+- Browser operations (launch, connect, close)
+- Navigation attempts and results
+- Tool executions and outcomes
+- Error details with stack traces
+- Browser console output
+- Resource usage (screenshots, console logs)
+
 ## Error Handling
 
 The server provides detailed error messages for:
@@ -110,3 +138,9 @@ Each tool call returns:
 - Success/failure status
 - Detailed error message if failed
 - Operation result data if successful
+
+All errors are also logged to the log files with:
+- Timestamp
+- Error message
+- Stack trace (when available)
+- Context information

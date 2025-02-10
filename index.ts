@@ -13,6 +13,44 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import puppeteer, { Browser, Page } from "puppeteer";
+import winston from 'winston';
+import 'winston-daily-rotate-file';
+import path from 'path';
+import fs from 'fs';
+
+// Create logs directory if it doesn't exist
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+// Configure Winston logger
+const logger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss.SSS'
+    }),
+    winston.format.errors({ stack: true }),
+    winston.format.splat(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'mcp-puppeteer' },
+  transports: [
+    // Write to rotating log files only to avoid interfering with MCP protocol
+    new winston.transports.DailyRotateFile({
+      filename: path.join(logsDir, 'mcp-puppeteer-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '14d',
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+      )
+    })
+  ]
+});
 
 // Define the tools once to avoid repetition
 const TOOLS: Tool[] = [
@@ -125,13 +163,52 @@ let page: Page | undefined;
 const consoleLogs: string[] = [];
 const screenshots = new Map<string, string>();
 
+// Log unhandled errors
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+  logger.error('Unhandled Rejection:', error);
+});
+
 async function ensureBrowser() {
   if (!browser) {
-    const npx_args = { headless: false }
-    const docker_args = { headless: true, args: ["--no-sandbox", "--single-process", "--no-zygote"] }
+    const commonArgs = [
+      "--disable-web-security",  // Bypass CORS
+      "--disable-features=IsolateOrigins,site-per-process", // Disable site isolation
+      "--disable-site-isolation-trials",
+      "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" // Modern Chrome UA
+    ];
+
+    const npx_args = { 
+      headless: false,
+      args: commonArgs
+    };
+
+    const docker_args = { 
+      headless: true, 
+      args: [
+        "--no-sandbox",
+        "--single-process",
+        "--no-zygote",
+        ...commonArgs
+      ]
+    };
+
+    logger.info('Launching browser with config:', process.env.DOCKER_CONTAINER ? 'docker' : 'npx');
     browser = await puppeteer.launch(process.env.DOCKER_CONTAINER ? docker_args : npx_args);
     const pages = await browser.pages();
     page = pages[0];
+
+    // Set default navigation timeout
+    await page.setDefaultNavigationTimeout(30000);
+    
+    // Enable JavaScript
+    await page.setJavaScriptEnabled(true);
+    
+    logger.info('Browser launched successfully');
   }
   return page!;
 }
@@ -153,18 +230,28 @@ async function getDebuggerWebSocketUrl(port: number = 9222): Promise<string> {
 }
 
 async function connectToExistingBrowser(wsEndpoint: string, targetUrl?: string): Promise<Page> {
+  logger.info('Connecting to existing browser', { wsEndpoint, targetUrl });
   try {
     // Close existing browser if any
     if (browser) {
+      logger.debug('Closing existing browser connection');
       await browser.close();
       browser = undefined;
       page = undefined;
     }
 
     // Connect to the browser instance
+    logger.debug('Establishing connection to browser');
     browser = await puppeteer.connect({ 
       browserWSEndpoint: wsEndpoint,
       defaultViewport: { width: 800, height: 600 }
+    });
+    logger.info('Successfully connected to browser');
+
+    // Configure page settings
+    page = (await browser.pages())[0];
+    await page.setExtraHTTPHeaders({
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     });
 
     // Get all pages
@@ -185,6 +272,7 @@ async function connectToExistingBrowser(wsEndpoint: string, targetUrl?: string):
     page.on("console", (msg) => {
       const logEntry = `[${msg.type()}] ${msg.text()}`;
       consoleLogs.push(logEntry);
+      logger.debug('Browser console:', { type: msg.type(), text: msg.text() });
       server.notification({
         method: "notifications/resources/updated",
         params: { uri: "console://logs" },
@@ -207,6 +295,7 @@ declare global {
 }
 
 async function handleToolCall(name: string, args: any): Promise<CallToolResult> {
+  logger.debug('Tool call received', { tool: name, arguments: args });
   const page = await ensureBrowser();
 
   switch (name) {
@@ -232,14 +321,41 @@ async function handleToolCall(name: string, args: any): Promise<CallToolResult> 
       }
 
     case "puppeteer_navigate":
-      await page.goto(args.url);
-      return {
-        content: [{
-          type: "text",
-          text: `Navigated to ${args.url}`,
-        }],
-        isError: false,
-      };
+      try {
+        logger.info('Navigating to URL', { url: args.url });
+        const response = await page.goto(args.url, {
+          waitUntil: 'networkidle0',
+          timeout: 30000
+        });
+        
+        if (!response) {
+          throw new Error('Navigation failed - no response received');
+        }
+
+        const status = response.status();
+        if (status >= 400) {
+          throw new Error(`HTTP error: ${status} ${response.statusText()}`);
+        }
+
+        logger.info('Navigation successful', { url: args.url, status });
+        return {
+          content: [{
+            type: "text",
+            text: `Successfully navigated to ${args.url} (Status: ${status})`,
+          }],
+          isError: false,
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Navigation failed', { url: args.url, error: errorMessage });
+        return {
+          content: [{
+            type: "text",
+            text: `Navigation failed: ${errorMessage}\nThis could be due to:\n- Network connectivity issues\n- Site blocking automated access\n- Page requiring authentication\n- Navigation timeout\n\nTry using a different URL or checking network connectivity.`,
+          }],
+          isError: true,
+        };
+      }
 
     case "puppeteer_screenshot": {
       const width = args.width ?? 800;
@@ -488,13 +604,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) =>
 );
 
 async function runServer() {
+  logger.info('Starting MCP server');
   const transport = new StdioServerTransport();
   await server.connect(transport);
+  logger.info('MCP server started successfully');
 }
 
-runServer().catch(console.error);
+runServer().catch((error) => {
+  // Use console.error for critical startup errors
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
 
 process.stdin.on("close", () => {
-  console.error("Puppeteer MCP Server closed");
+  // Use console.error for shutdown message
+  console.error("Puppeteer MCP Server closing");
   server.close();
 });
