@@ -2,6 +2,8 @@
 
 This MCP server provides browser automation capabilities through Puppeteer, allowing interaction with both new browser instances and existing Chrome windows.
 
+<a href="https://glama.ai/mcp/servers/lpt1tvbubf"><img width="380" height="200" src="https://glama.ai/mcp/servers/lpt1tvbubf/badge" alt="Puppeteer Server MCP server" /></a>
+
 ## Features
 
 - Navigate web pages
