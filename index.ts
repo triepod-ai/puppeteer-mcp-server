@@ -240,34 +240,45 @@ async function connectToExistingBrowser(wsEndpoint: string, targetUrl?: string):
       page = undefined;
     }
 
-    // Connect to the browser instance
+    // Connect to the browser instance with null viewport to maintain browser's viewport
     logger.debug('Establishing connection to browser');
     browser = await puppeteer.connect({ 
       browserWSEndpoint: wsEndpoint,
-      defaultViewport: { width: 800, height: 600 }
+      defaultViewport: null
     });
     logger.info('Successfully connected to browser');
 
+    // Get all pages and find non-extension pages
+    const pages = await browser.pages();
+    const activeTabs = [];
+    
+    for (const p of pages) {
+      const url = await p.url();
+      if (!url.startsWith('chrome-extension://')) {
+        const title = await p.title();
+        logger.info('Found active webpage:', { url, title });
+        activeTabs.push({ page: p, url, title });
+      }
+    }
+
+    if (activeTabs.length === 0) {
+      throw new Error("No active non-extension pages found in the browser");
+    }
+
+    // Select appropriate page
+    if (targetUrl) {
+      // Find the page with matching URL
+      const targetTab = activeTabs.find(tab => tab.url === targetUrl);
+      page = targetTab ? targetTab.page : activeTabs[0].page;
+    } else {
+      // Use the first active non-extension page
+      page = activeTabs[0].page;
+    }
+
     // Configure page settings
-    page = (await browser.pages())[0];
     await page.setExtraHTTPHeaders({
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     });
-
-    // Get all pages
-    const pages = await browser.pages();
-    
-    if (targetUrl) {
-      // Find the page with matching URL
-      page = pages.find(p => p.url() === targetUrl) || pages[0];
-    } else {
-      // Use the first active page
-      page = pages[0];
-    }
-
-    if (!page) {
-      throw new Error("No active pages found in the browser");
-    }
 
     page.on("console", (msg) => {
       const logEntry = `[${msg.type()}] ${msg.text()}`;
@@ -302,11 +313,13 @@ async function handleToolCall(name: string, args: any): Promise<CallToolResult> 
     case "puppeteer_connect_active_tab":
       try {
         const wsEndpoint = await getDebuggerWebSocketUrl(args.debugPort);
-        await connectToExistingBrowser(wsEndpoint, args.targetUrl);
+        const connectedPage = await connectToExistingBrowser(wsEndpoint, args.targetUrl);
+        const url = await connectedPage.url();
+        const title = await connectedPage.title();
         return {
           content: [{
             type: "text",
-            text: `Successfully connected to browser${args.targetUrl ? ` and found tab with URL ${args.targetUrl}` : ''}`,
+            text: `Successfully connected to browser\nActive webpage: ${title} (${url})`,
           }],
           isError: false,
         };
