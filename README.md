@@ -13,7 +13,25 @@ This MCP server provides browser automation capabilities through Puppeteer, allo
 - Select options
 - Hover elements
 - Execute JavaScript
-- Connect to active Chrome tabs
+- Smart Chrome tab management:
+  - Connect to active Chrome tabs
+  - Preserve existing Chrome instances
+  - Intelligent connection handling
+
+## Project Structure
+
+```
+/
+├── src/
+│   ├── config/        # Configuration modules
+│   ├── tools/         # Tool definitions and handlers
+│   ├── browser/       # Browser connection management
+│   ├── types/         # TypeScript type definitions
+│   ├── resources/     # Resource handlers
+│   └── server.ts      # Server initialization
+├── index.ts          # Entry point
+└── README.md        # Documentation
+```
 
 ## Usage
 
@@ -25,7 +43,9 @@ The server will launch a new browser instance by default.
 
 To connect to an existing Chrome window:
 
-1. Launch Chrome with remote debugging enabled:
+1. Close any existing Chrome instances completely
+
+2. Launch Chrome with remote debugging enabled:
    ```bash
    # Windows
    "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
@@ -37,7 +57,9 @@ To connect to an existing Chrome window:
    google-chrome --remote-debugging-port=9222
    ```
 
-2. Connect using the `puppeteer_connect_active_tab` tool:
+3. Navigate to your desired webpage in Chrome
+
+4. Connect using the `puppeteer_connect_active_tab` tool:
    ```json
    {
      "targetUrl": "https://example.com", // Optional: specific tab URL
@@ -45,7 +67,11 @@ To connect to an existing Chrome window:
    }
    ```
 
-The server will automatically detect and connect to the Chrome instance running with remote debugging enabled.
+The server will:
+- Detect and connect to the Chrome instance running with remote debugging enabled
+- Preserve your Chrome instance (won't close it)
+- Find and connect to non-extension tabs
+- Provide clear error messages if connection fails
 
 ## Available Tools
 
