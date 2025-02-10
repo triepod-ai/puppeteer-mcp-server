@@ -172,3 +172,7 @@ All errors are also logged to the log files with:
 - Error message
 - Stack trace (when available)
 - Context information
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
