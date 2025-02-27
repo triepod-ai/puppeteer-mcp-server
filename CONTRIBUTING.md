@@ -1,6 +1,6 @@
 # Contributing to Puppeteer MCP Server
 
-Thank you for your interest in contributing to the Puppeteer MCP Server! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the Puppeteer MCP Server! This is an experimental implementation inspired by [@modelcontextprotocol/server-puppeteer](https://github.com/modelcontextprotocol/servers). This document provides guidelines and instructions for contributing to the project.
 
 ## Development Setup
 
