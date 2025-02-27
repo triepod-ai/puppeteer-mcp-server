@@ -3,6 +3,10 @@
 [![smithery badge](https://smithery.ai/badge/@merajmehrabi/puppeteer-mcp-server)](https://smithery.ai/server/@merajmehrabi/puppeteer-mcp-server)
 This MCP server provides browser automation capabilities through Puppeteer, allowing interaction with both new browser instances and existing Chrome windows.
 
+## Acknowledgment
+
+This project is an experimental implementation inspired by [@modelcontextprotocol/server-puppeteer](https://github.com/modelcontextprotocol/servers). While it shares similar goals and concepts, it explores alternative approaches to browser automation through the Model Context Protocol.
+
 <a href="https://glama.ai/mcp/servers/lpt1tvbubf"><img width="380" height="200" src="https://glama.ai/mcp/servers/lpt1tvbubf/badge" alt="Puppeteer Server MCP server" /></a>
 
 ## Features
