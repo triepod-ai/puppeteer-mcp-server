@@ -38,54 +38,144 @@ This project is an experimental implementation inspired by [@modelcontextprotoco
 └── README.md        # Documentation
 ```
 
-## Setup
+## Installation
 
-### Installation
-
-You can install the server globally:
+### Option 1: Install from npm
 
 ```bash
 npm install -g puppeteer-mcp-server
 ```
 
-Or use it directly with npx:
+You can also run it directly without installation using npx:
 
 ```bash
 npx puppeteer-mcp-server
 ```
 
-### MCP Configuration
+### Option 2: Install from source
 
-To use this server with Claude or other MCP-compatible systems, add it to your MCP configuration file:
+1. Clone this repository or download the source code
+2. Install dependencies:
 
-#### Using npx (Recommended)
-
-```json
-"puppeteer": {
-  "command": "npx",
-  "args": [
-    "-y", "puppeteer-mcp-server"
-  ]
-}
+```bash
+npm install
 ```
 
-#### Using a local installation
+3. Build the project:
+
+```bash
+npm run build
+```
+
+4. Run the server:
+
+```bash
+npm start
+```
+
+## MCP Server Configuration
+
+To use this tool with Claude, you need to add it to your MCP settings configuration file.
+
+### For Claude Desktop App
+
+Add the following to your Claude Desktop configuration file (located at `%APPDATA%\Claude\claude_desktop_config.json` on Windows or `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+#### If installed globally via npm:
 
 ```json
-"puppeteer": {
-  "command": "node",
-  "args": [
-    "PATH/TO/puppeteer-mcp-server/dist/index.js"
-  ],
-  "env": {
-    "NODE_OPTIONS": "--experimental-modules"
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "puppeteer-mcp-server",
+      "args": [],
+      "env": {}
+    }
   }
 }
 ```
 
-Replace `PATH/TO` with the actual path to your installation.
+#### Using npx (without installation):
 
-For a complete example, see the [Outlook Calendar MCP repository](https://github.com/merajmehrabi/Outlook_Calendar_MCP.git).
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "puppeteer-mcp-server"],
+      "env": {}
+    }
+  }
+}
+```
+
+#### If installed from source:
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "node",
+      "args": ["path/to/puppeteer-mcp-server/dist/index.js"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-modules"
+      }
+    }
+  }
+}
+```
+
+### For Claude VSCode Extension
+
+Add the following to your Claude VSCode extension MCP settings file (located at `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json` on Windows or `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` on macOS):
+
+#### If installed globally via npm:
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "puppeteer-mcp-server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+```
+
+#### Using npx (without installation):
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "puppeteer-mcp-server"],
+      "env": {}
+    }
+  }
+}
+```
+
+#### If installed from source:
+
+```json
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "node",
+      "args": ["path/to/puppeteer-mcp-server/dist/index.js"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-modules"
+      }
+    }
+  }
+}
+```
+
+For source installation, replace `path/to/puppeteer-mcp-server` with the actual path to where you installed this tool.
+
+For more examples, see the [Outlook Calendar MCP repository](https://github.com/merajmehrabi/Outlook_Calendar_MCP.git).
 
 ## Usage
 
