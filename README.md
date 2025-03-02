@@ -38,6 +38,55 @@ This project is an experimental implementation inspired by [@modelcontextprotoco
 └── README.md        # Documentation
 ```
 
+## Setup
+
+### Installation
+
+You can install the server globally:
+
+```bash
+npm install -g puppeteer-mcp-server
+```
+
+Or use it directly with npx:
+
+```bash
+npx puppeteer-mcp-server
+```
+
+### MCP Configuration
+
+To use this server with Claude or other MCP-compatible systems, add it to your MCP configuration file:
+
+#### Using npx (Recommended)
+
+```json
+"puppeteer": {
+  "command": "npx",
+  "args": [
+    "-y", "puppeteer-mcp-server"
+  ]
+}
+```
+
+#### Using a local installation
+
+```json
+"puppeteer": {
+  "command": "node",
+  "args": [
+    "PATH/TO/puppeteer-mcp-server/dist/index.js"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--experimental-modules"
+  }
+}
+```
+
+Replace `PATH/TO` with the actual path to your installation.
+
+For a complete example, see the [Outlook Calendar MCP repository](https://github.com/merajmehrabi/Outlook_Calendar_MCP.git).
+
 ## Usage
 
 ### Standard Mode
