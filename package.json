@@ -1,6 +1,6 @@
 {
     "name": "puppeteer-mcp-server",
-    "version": "0.7.1",
+    "version": "0.7.2",
     "description": "Experimental MCP server for browser automation using Puppeteer (inspired by @modelcontextprotocol/server-puppeteer)",
     "license": "MIT",
     "author": "Meraj Mehrabi",
