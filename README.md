@@ -175,8 +175,6 @@ Add the following to your Claude VSCode extension MCP settings file (located at 
 
 For source installation, replace `path/to/puppeteer-mcp-server` with the actual path to where you installed this tool.
 
-For more examples, see the [Outlook Calendar MCP repository](https://github.com/merajmehrabi/Outlook_Calendar_MCP.git).
-
 ## Usage
 
 ### Standard Mode

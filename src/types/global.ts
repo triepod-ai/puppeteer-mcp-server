@@ -1,8 +1,8 @@
 declare global {
   interface Window {
-    mcpHelper: {
-      logs: string[],
-      originalConsole: Partial<typeof console>,
+    mcpHelper?: {
+      logs: string[];
+      originalLog: typeof console.log;
     }
   }
 }

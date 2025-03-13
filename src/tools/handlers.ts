@@ -223,43 +223,50 @@ export async function handleToolCall(
 
     case "puppeteer_evaluate":
       try {
-        await page.evaluate(() => {
-          window.mcpHelper = {
-            logs: [],
-            originalConsole: { ...console },
-          };
-
-          ['log', 'info', 'warn', 'error'].forEach(method => {
-            (console as any)[method] = (...args: any[]) => {
-              window.mcpHelper.logs.push(`[${method}] ${args.join(' ')}`);
-              (window.mcpHelper.originalConsole as any)[method](...args);
-            };
-          });
-        });
-
-        const result = await page.evaluate(args.script);
-
-        const logs = await page.evaluate(() => {
-          Object.assign(console, window.mcpHelper.originalConsole);
-          const logs = window.mcpHelper.logs;
-          delete (window as any).mcpHelper;
-          return logs;
-        });
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Execution result:\n${JSON.stringify(result, null, 2)}\n\nConsole output:\n${logs.join('\n')}`,
-            },
-          ],
-          isError: false,
+        // Set up console listener
+        const logs: string[] = [];
+        const consoleListener = (message: any) => {
+          logs.push(`${message.type()}: ${message.text()}`);
         };
-      } catch (error) {
+        
+        page.on('console', consoleListener);
+        
+        // Execute script with proper serialization
+        logger.debug('Executing script in browser', { scriptLength: args.script.length });
+        
+        // Wrap the script in a function that returns a serializable result
+        const result = await page.evaluate(`(async () => {
+          try {
+            const result = (function() { ${args.script} })();
+            return result;
+          } catch (e) {
+            console.error('Script execution error:', e.message);
+            return { error: e.message };
+          }
+        })()`);
+        
+        // Remove the listener to avoid memory leaks
+        page.off('console', consoleListener);
+        
+        logger.debug('Script execution result', {
+          resultType: typeof result,
+          hasResult: result !== undefined,
+          logCount: logs.length
+        });
+
         return {
           content: [{
             type: "text",
-            text: `Script execution failed: ${(error as Error).message}`,
+            text: `Execution result:\n${JSON.stringify(result, null, 2)}\n\nConsole output:\n${logs.join('\n')}`,
+          }],
+          isError: false,
+        };
+      } catch (error) {
+        logger.error('Script evaluation failed', { error: error instanceof Error ? error.message : String(error) });
+        return {
+          content: [{
+            type: "text",
+            text: `Script execution failed: ${error instanceof Error ? error.message : String(error)}\n\nPossible causes:\n- Syntax error in script\n- Execution timeout\n- Browser security restrictions\n- Serialization issues with complex objects`,
           }],
           isError: true,
         };
