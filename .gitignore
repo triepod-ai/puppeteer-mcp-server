@@ -44,3 +44,12 @@ coverage/
 .clinerules*
 .roo*
 memory-bank/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Python virtual environments
+venv/
+.venv/
