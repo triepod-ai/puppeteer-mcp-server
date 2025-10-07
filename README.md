@@ -1,7 +1,18 @@
 # Puppeteer MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@merajmehrabi/puppeteer-mcp-server)](https://smithery.ai/server/@merajmehrabi/puppeteer-mcp-server)
+
 This MCP server provides browser automation capabilities through Puppeteer, allowing interaction with both new browser instances and existing Chrome windows.
+
+---
+
+**Original Author**: [Meraj Mehrabi](https://github.com/merajmehrabi) - [Original Repository](https://github.com/merajmehrabi/puppeteer-mcp-server)
+
+**Fork Maintained By**: [@triepod-ai](https://github.com/triepod-ai)
+
+This fork includes significant enhancements including MCP SDK 1.19.1 upgrade, FastAPI HTTP server mode, and comprehensive LLM-optimized documentation.
+
+---
 
 ## Acknowledgment
 
