@@ -9,6 +9,80 @@ This project is an experimental implementation inspired by [@modelcontextprotoco
 
 <a href="https://glama.ai/mcp/servers/lpt1tvbubf"><img width="380" height="200" src="https://glama.ai/mcp/servers/lpt1tvbubf/badge" alt="Puppeteer Server MCP server" /></a>
 
+## 🚀 Fork Enhancements & Contributions
+
+This fork includes significant improvements and new capabilities beyond the original implementation:
+
+### **Latest MCP SDK & Protocol (October 2025)**
+- **Upgraded SDK**: `@modelcontextprotocol/sdk` from `1.0.1` → `1.19.1` (18 version jump)
+- **Protocol Version**: Updated from `2024-11-05` → `2025-03-26`
+- **New Protocol Features**:
+  - OAuth 2.1 authorization framework support
+  - Streamable HTTP transport (replaces deprecated SSE)
+  - Tool annotations for behavior metadata
+  - Enhanced progress notifications with messages
+  - Audio content type support
+  - JSON-RPC request batching
+
+### **Dual-Server Architecture: Stdio + FastAPI HTTP**
+Added complete FastAPI REST API server mode alongside the standard MCP stdio mode:
+
+- **Stdio Mode** (Standard MCP): Direct Claude Desktop integration via JSON-RPC
+- **HTTP Mode** (NEW): REST API on port 9136 for web integrations
+  - FastAPI server with automatic OpenAPI documentation
+  - Full HTTP endpoints for all 8 Puppeteer tools
+  - CORS enabled for browser access
+  - Health checks and resource listing
+  - Compatible with Open WebUI and direct API calls
+  - Comprehensive startup/management scripts
+
+**Architecture**: Both modes share the same TypeScript MCP core, ensuring consistent behavior while offering flexible integration options.
+
+### **LLM-Optimized Tool Descriptions**
+Comprehensive enhancement of all tool documentation for improved LLM understanding:
+
+- **Complete Parameter Documentation**: Every parameter now has detailed descriptions with examples
+- **Format Specifications**: CSS selector patterns, URL formats, value constraints
+- **Usage Context**: Prerequisites, return values, behavioral details, timeout information
+- **Concrete Examples**: Real-world selector examples, common patterns, edge cases
+- **Execution Details**: Browser context clarification, serialization limits, wait states
+
+**Tools Enhanced**:
+- `puppeteer_connect_active_tab` - Chrome debugging setup, port ranges, tab targeting
+- `puppeteer_navigate` - Protocol support, timeout info, networkidle0 wait behavior
+- `puppeteer_screenshot` - Resource URI usage, viewport sizing, common resolutions
+- `puppeteer_click` - Element types, selector examples, multi-match behavior
+- `puppeteer_fill` - Typing simulation, contenteditable support, content clearing
+- `puppeteer_select` - Value vs visible text distinction, option patterns
+- `puppeteer_hover` - Hover state persistence, common use cases
+- `puppeteer_evaluate` - Browser vs Node.js context, serialization constraints, console capture
+
+### **Enhanced Development Infrastructure**
+- Python virtual environment management with `uv` package manager
+- Comprehensive `.gitignore` updates for Python and Node.js projects
+- FastAPI server management scripts with auto-restart and health checks
+- Improved logging strategy for both server modes
+- Clean stdio handling for MCP protocol compliance
+
+### **Technical Specifications**
+- **MCP SDK Version**: 1.19.1
+- **MCP Protocol**: 2025-03-26
+- **Node.js Requirement**: ≥18
+- **Python Version**: 3.11+ (for FastAPI mode)
+- **FastAPI Port**: 9136
+- **Chrome Debug Port**: 9222 (default)
+
+### **Benefits of This Fork**
+✅ Latest MCP protocol features and improvements
+✅ Dual integration modes (stdio + HTTP REST API)
+✅ Superior LLM comprehension through enhanced descriptions
+✅ Modern FastAPI implementation with OpenAPI docs
+✅ Production-ready with comprehensive testing
+✅ Backward compatible with existing configurations
+✅ Well-documented for both developers and AI agents
+
+**Documentation**: See `CLAUDE.md` for detailed architecture documentation and `README_FASTAPI.md` for HTTP mode setup.
+
 ## Features
 
 - Navigate web pages
