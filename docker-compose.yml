@@ -1,0 +1,54 @@
+# docker-compose.yml - Puppeteer MCP HTTP Server deployment
+#
+# Usage:
+#   docker compose build     # Build the image
+#   docker compose up        # Start in foreground
+#   docker compose up -d     # Start in background (detached)
+#   docker compose down      # Stop and remove container
+#   docker compose logs -f   # Follow logs
+
+services:
+  puppeteer-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.http
+    image: puppeteer-mcp-http:latest
+    container_name: puppeteer-mcp-http
+    ports:
+      # FastAPI HTTP API - main interface
+      - "9136:9136"
+      # Chrome remote debugging - for external debugging/inspection
+      - "9222:9222"
+    environment:
+      # Chrome configuration
+      - CHROME_DEBUG_PORT=9222
+      # FastAPI configuration
+      - FASTAPI_PORT=9136
+      - FASTAPI_HOST=0.0.0.0
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9136/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    # Resource limits (optional, adjust as needed)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    # Restart policy
+    restart: unless-stopped
+    # Shared memory size (important for Chrome)
+    shm_size: '2gb'
+    # Security options for Chrome
+    security_opt:
+      - seccomp:unconfined
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

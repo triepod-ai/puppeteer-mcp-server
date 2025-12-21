@@ -28,9 +28,19 @@ class MCPClient:
         try:
             logger.info("Starting Puppeteer MCP server...")
 
-            # Start the MCP server using npx tsx
+            # Determine command based on environment
+            # In Docker: use compiled dist/index.js
+            # In development: use npx tsx index.ts
+            if os.environ.get("DOCKER_CONTAINER"):
+                cmd = ["node", "dist/index.js"]
+                logger.info("Docker mode: using node dist/index.js")
+            else:
+                cmd = ["npx", "tsx", "index.ts"]
+                logger.info("Development mode: using npx tsx index.ts")
+
+            # Start the MCP server
             self.process = await asyncio.create_subprocess_exec(
-                "npx", "tsx", "index.ts",
+                *cmd,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

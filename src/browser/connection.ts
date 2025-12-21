@@ -9,18 +9,32 @@ let page: Page | undefined;
 
 export async function ensureBrowser(): Promise<Page> {
   if (!browser) {
-    logger.info('Launching browser with config:', process.env.DOCKER_CONTAINER ? 'docker' : 'npx');
-    browser = await puppeteer.launch(process.env.DOCKER_CONTAINER ? dockerConfig : npxConfig);
+    // Check for Chrome WebSocket endpoint (set by docker-entrypoint.sh)
+    const wsEndpoint = process.env.CHROME_WS_ENDPOINT;
+
+    if (wsEndpoint) {
+      // Connect to pre-running Chrome instance (Docker mode)
+      logger.info('Connecting to Chrome via WebSocket endpoint:', wsEndpoint);
+      browser = await puppeteer.connect({
+        browserWSEndpoint: wsEndpoint,
+        defaultViewport: null
+      });
+      logger.info('Connected to existing Chrome browser');
+    } else {
+      // Launch new browser instance (local mode)
+      logger.info('Launching browser with config:', process.env.DOCKER_CONTAINER ? 'docker' : 'npx');
+      browser = await puppeteer.launch(process.env.DOCKER_CONTAINER ? dockerConfig : npxConfig);
+      logger.info('Browser launched successfully');
+    }
+
     const pages = await browser.pages();
-    page = pages[0];
+    page = pages[0] || await browser.newPage();
 
     // Set default navigation timeout
     await page.setDefaultNavigationTimeout(DEFAULT_NAVIGATION_TIMEOUT);
-    
+
     // Enable JavaScript
     await page.setJavaScriptEnabled(true);
-    
-    logger.info('Browser launched successfully');
   }
   return page!;
 }

@@ -1,0 +1,84 @@
+# Dockerfile.http - HTTP server with Chromium browser
+# Multi-stage build for puppeteer-mcp FastAPI server
+
+# =============================================================================
+# Stage 1: Build TypeScript MCP server
+# =============================================================================
+FROM node:20-bookworm AS builder
+
+WORKDIR /app
+
+# Copy package files and source files together
+COPY package*.json tsconfig.json ./
+COPY src/ ./src/
+COPY index.ts ./
+
+# Install dependencies (--ignore-scripts to avoid running build before source is ready)
+RUN npm ci --ignore-scripts
+
+# Build TypeScript to JavaScript
+RUN npm run build
+
+# =============================================================================
+# Stage 2: Runtime with Node.js, Python, and Chromium
+# =============================================================================
+FROM node:20-bookworm-slim
+
+# Install system dependencies:
+# - chromium: Headless browser for Puppeteer
+# - python3, python3-venv, python3-pip: For FastAPI server
+# - curl, jq: For health checks and JSON parsing in entrypoint
+# - procps: For process management (ps command)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    python3 \
+    python3-venv \
+    python3-pip \
+    curl \
+    jq \
+    procps \
+    socat \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Configure Puppeteer to use system Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV DOCKER_CONTAINER=true
+
+WORKDIR /app
+
+# Copy built MCP server from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+
+# Install only production Node.js dependencies (no scripts needed, build already done)
+RUN npm ci --omit=dev --ignore-scripts
+
+# Copy FastAPI server
+COPY fastapi_server ./fastapi_server
+
+# Create Python virtual environment and install dependencies
+RUN python3 -m venv /app/venv \
+    && /app/venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /app/venv/bin/pip install --no-cache-dir -r fastapi_server/requirements.txt
+
+# Copy and setup entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Expose ports:
+# - 9136: FastAPI HTTP API
+# - 9222: Chrome remote debugging
+EXPOSE 9136 9222
+
+# Health check for FastAPI server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:9136/health || exit 1
+
+# Labels for container metadata
+LABEL org.opencontainers.image.title="Puppeteer MCP HTTP Server"
+LABEL org.opencontainers.image.description="HTTP REST API for browser automation using Puppeteer via MCP"
+LABEL org.opencontainers.image.source="https://github.com/triepod-ai/puppeteer-mcp-server"
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
