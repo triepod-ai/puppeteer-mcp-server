@@ -19,6 +19,9 @@ export const TOOLS: Tool[] = [
       },
       required: [],
     },
+    annotations: {
+      readOnlyHint: true,
+    },
   },
   {
     name: "puppeteer_navigate",
@@ -32,6 +35,9 @@ export const TOOLS: Tool[] = [
         },
       },
       required: ["url"],
+    },
+    annotations: {
+      readOnlyHint: false,
     },
   },
   {
@@ -59,6 +65,9 @@ export const TOOLS: Tool[] = [
       },
       required: ["name"],
     },
+    annotations: {
+      readOnlyHint: true,
+    },
   },
   {
     name: "puppeteer_click",
@@ -72,6 +81,9 @@ export const TOOLS: Tool[] = [
         },
       },
       required: ["selector"],
+    },
+    annotations: {
+      readOnlyHint: false,
     },
   },
   {
@@ -91,6 +103,9 @@ export const TOOLS: Tool[] = [
       },
       required: ["selector", "value"],
     },
+    annotations: {
+      readOnlyHint: false,
+    },
   },
   {
     name: "puppeteer_select",
@@ -109,6 +124,9 @@ export const TOOLS: Tool[] = [
       },
       required: ["selector", "value"],
     },
+    annotations: {
+      readOnlyHint: false,
+    },
   },
   {
     name: "puppeteer_hover",
@@ -123,6 +141,9 @@ export const TOOLS: Tool[] = [
       },
       required: ["selector"],
     },
+    annotations: {
+      readOnlyHint: true,
+    },
   },
   {
     name: "puppeteer_evaluate",
@@ -136,6 +157,9 @@ export const TOOLS: Tool[] = [
         },
       },
       required: ["script"],
+    },
+    annotations: {
+      readOnlyHint: false,
     },
   },
 ];
